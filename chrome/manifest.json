@@ -1,0 +1,19 @@
+{
+  "name": "ZhengFang System Toolkit",
+  "description": "A tool to help using ZhengFang System more easier.",
+  "version": "1.0",
+  "permissions": [
+    "tabs", "http://*/*", "https://*/*", "http://202.116.160.170/*"
+  ],
+  "browser_action": {
+      "default_title": "Fucking ZhengFang",
+      "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://202.116.160.170/*"],
+      "js": ["myscript.js"]
+    }
+  ],
+  "manifest_version": 2
+}
