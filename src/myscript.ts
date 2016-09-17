@@ -4,6 +4,8 @@ const CRLF = "\r\n"
 const SPACE = " "
 const iframe = <HTMLIFrameElement>document.querySelector("#iframeautoheight");
 
+console.log("Fucking ZhengFang")
+
 const PAGE = {
     "main" : /xs_main.aspx/,
     "course_table": /xskbcx.aspx/

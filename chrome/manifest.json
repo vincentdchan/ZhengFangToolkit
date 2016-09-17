@@ -3,7 +3,7 @@
   "description": "A tool to help using ZhengFang System more easier.",
   "version": "1.0",
   "permissions": [
-    "tabs", "http://*/*", "https://*/*", "http://202.116.160.170/*"
+    "tabs", "http://202.116.160.170/*", "http://Jwxw.gzcc.cn/*"
   ],
   "browser_action": {
       "default_title": "Fucking ZhengFang",

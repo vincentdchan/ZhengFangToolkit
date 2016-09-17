@@ -3,6 +3,7 @@ const DEFAULT_PRODID = "-//TypeScript/Node.js//SCAU Course Exporter v1.0//CN";
 const CRLF = "\r\n";
 const SPACE = " ";
 const iframe = document.querySelector("#iframeautoheight");
+console.log("Fucking ZhengFang");
 const PAGE = {
     "main": /xs_main.aspx/,
     "course_table": /xskbcx.aspx/
