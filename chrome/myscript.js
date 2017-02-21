@@ -233,24 +233,31 @@ function exportCourse(doc) {
     function tryParse(td) {
         var str = td.innerHTML;
         const rowspan = td.rowSpan;
+        let result = [];
         if (str && str.length > 0) {
             str = str.replace(/<br>/g, "\n");
-            var _data = str.match(/[^\n]+/g);
+            var _data = str.split("\n");
+            // var _data = str.match(/[^\n]+/g)
             if (_data.length >= 3) {
-                var data = {
-                    name: _data[0],
-                    timeinfo: _data[1],
-                    teacher_name: _data[2],
-                    quantity: 1
-                };
-                if (_data.length >= 4)
-                    data.location = _data[3];
-                if (_data.length >= 5)
-                    data.examinfo = _data[4];
-                if (rowspan)
-                    data.quantity = rowspan;
-                return data;
+                while (_data.length > 0) {
+                    if (_data[0] == "") {
+                        _data.shift();
+                        continue;
+                    }
+                    var data = {
+                        name: _data.shift(),
+                        timeinfo: _data.shift(),
+                        teacher_name: _data.shift(),
+                        quantity: 1
+                    };
+                    if (_data.length > 0 || _data[0] != "") {
+                        data.location = _data.shift();
+                        ;
+                    }
+                    result.push(data);
+                }
             }
+            return result;
         }
         return null;
     }
@@ -261,8 +268,9 @@ function exportCourse(doc) {
         var _td = tds[i];
         var re = tryParse(_td);
         if (re)
-            result.push(re);
+            result = result.concat(re);
     }
+    console.log(result);
     return result;
 }
 var ENDL = "\n";
