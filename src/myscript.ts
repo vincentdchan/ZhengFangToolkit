@@ -8,7 +8,8 @@ console.log("Fucking ZhengFang")
 
 const PAGE = {
     "main" : /xs_main.aspx/,
-    "course_table": /xskbcx.aspx/
+    "course_table": /xskbcx.aspx/,
+    "exams_table": /xskscx.aspx/,
 }
 
 interface IProperty {
@@ -463,6 +464,59 @@ function genFinal(init: Array<string>): string {
     return result
 }
 
+function parseExamsTable(rows: HTMLTableRowElement[]): VCalendar {
+    function parseExamTime(str: string): VEvent {
+        let evt = new VEvent();
+        let quoteDate : RegExpExecArray;
+        let quoteTime : RegExpExecArray;
+        if (str[0] == '第') {    // pattern1: 第11周周6(2017-05-06) 15:00-17:00
+            quoteDate = /\((\d{4})-(\d{2})-(\d{2})\)/.exec(str);
+            quoteTime = /(\d{2}):(\d{2})-(\d{2}):(\d{2})/.exec(str);
+        } else {    // pattern2: 2017年06月28日(09:00-11:00)
+            quoteDate = /(\d{4})年(\d{2})月(\d{2})日/.exec(str);
+            quoteTime = /(\d{2}):(\d{2})-(\d{2}):(\d{2})/.exec(str);
+        }
+        let startDate = new Date();
+        let endDate = new Date();
+        startDate.setFullYear(parseInt(quoteDate[1]));
+        startDate.setMonth(parseInt(quoteDate[2]) - 1);
+        startDate.setDate(parseInt(quoteDate[3]));
+        endDate.setFullYear(parseInt(quoteDate[1]));
+        endDate.setMonth(parseInt(quoteDate[2]) - 1);
+        endDate.setDate(parseInt(quoteDate[3]));
+        startDate.setHours(parseInt(quoteTime[1]));
+        startDate.setMinutes(parseInt(quoteTime[2]));
+        startDate.setMilliseconds(0);
+        endDate.setHours(parseInt(quoteTime[3]));
+        endDate.setMinutes(parseInt(quoteTime[4]));
+        endDate.setMilliseconds(0);
+        evt.dtstart = new Value(startDate);
+        evt.dtend = new Value(endDate);
+        return evt;
+    }
+    let events : VEvent[] = [];
+    let dtstamp = new Date();
+    rows.forEach((elm, index) => {
+        let children = elm.children;
+        if (children.item(3).innerHTML != '&nbsp;') {
+            let examName: string = children.item(1).innerHTML,
+                rawTime: string = children.item(3).innerHTML,
+                location = children.item(7).innerHTML + children.item(4).innerHTML +
+                    ' 座位号' + children.item(6).innerHTML;
+
+            let evt = parseExamTime(rawTime);
+            evt.summary = new Value(examName + '（考试）');
+            evt.location = new Value(location);
+            evt.uid = new Value("exam#" + index);
+            evt.dtstamp = new Value(dtstamp);
+            events.push(evt);
+        }
+    });
+    let result = new VCalendar();
+    result.events = events;
+    return result;
+}
+
 function calendarGen(cal: VCalendar): string {
     return genFinal(iCalGen(cal))
 }
@@ -472,7 +526,7 @@ if (iframe) {
         const content = iframe.contentDocument || iframe.contentWindow.document
         const URL = content.location.href
 
-        if (PAGE['course_table'].test(URL)){
+        if (PAGE['course_table'].test(URL)){    // parse the course table
             const schoolyear_select = <HTMLSelectElement>content.querySelector('#xnd')
             const term_select = <HTMLSelectElement>content.querySelector('#xqd')
             const inject_td = <HTMLTableDataCellElement>content
@@ -495,7 +549,7 @@ if (iframe) {
 
             export_span.innerHTML = "   这个学期的第一个星期一是："
             export_first_day.type = "date"
-            export_first_day.value = "2016-08-29"
+            export_first_day.value = "2017-02-20"
 
             export_btn.innerText = "导出课表"
             export_btn.addEventListener('click', (evt: MouseEvent) => {
@@ -522,7 +576,38 @@ if (iframe) {
                 dwn_anchor.setAttribute("download", "cal.ics")
             })
 
+        } else if (PAGE['exams_table'].test(URL)) {     // parse exams table
+            const export_btn = content.createElement('button');
+            export_btn.innerText = "导出考试";
+            const dl_link = content.createElement('a');
+            dl_link.innerText = "下载ics文件";
+            dl_link.style.visibility = 'hidden';
 
+            const searchCon = content.querySelector('#form1 > div.toolbox > div.searchbox > p.search_con');
+            searchCon.appendChild(export_btn);
+            searchCon.appendChild(dl_link);
+
+            export_btn.addEventListener('click', (e: Event) => {
+                e.preventDefault();
+                const rows = content.querySelectorAll('#DataGrid1 > tbody > tr');
+
+                let cleanRows : HTMLTableRowElement[] = [];
+                for (let i = 0; i < rows.length; i++) {
+                    let trElm = <HTMLTableRowElement>rows[i];
+                    if (trElm.classList.contains('datelisthead')) continue;
+                    cleanRows.push(trElm);
+                }
+                let calendar = parseExamsTable(cleanRows);
+                let result = calendarGen(calendar);
+
+                var link = window.URL.createObjectURL(new Blob([result], {
+                    type: "text/x-vCalendar"
+                }))
+
+                dl_link.style.visibility = "visible"
+                dl_link.setAttribute("href", link)
+                dl_link.setAttribute("download", "cal.ics")
+            })
         }
     })
 
